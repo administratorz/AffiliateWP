@@ -227,6 +227,13 @@ class Affiliate_WP_Settings {
 		// Loop through each setting being saved and pass it through a sanitization filter
 		foreach ( $input as $key => $value ) {
 
+			// Don't overwrite the global license key.
+//			if ( 'license_key' === $key ) {
+//				if ( self::global_license_set() && $value !== self::get_license_key() ) {
+//					$value = self::get_license_key();
+//				}
+//			}
+
 			// Get the setting type (checkbox, select, etc)
 			$type              = isset( $settings[ $tab ][ $key ][ 'type' ] ) ? $settings[ $tab ][ $key ][ 'type' ] : false;
 			$sanitize_callback = isset( $settings[ $tab ][ $key ][ 'sanitize_callback' ] ) ? $settings[ $tab ][ $key ][ 'sanitize_callback' ] : false;
@@ -350,6 +357,12 @@ class Affiliate_WP_Settings {
 		$user_info = get_userdata( get_current_user_id() );
 		$username  = $user_info ? esc_html( $user_info->user_login ) : '';
 
+		if ( self::global_license_set() ) {
+			$license_desc = sprintf( __( 'Your license key is globally defined in <code>wp-config.php</code> and cannot be modified from this screen.<br />An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' );
+		} else {
+			$license_desc = sprintf( __( 'Please enter your license key. An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' );
+		}
+
 		$settings = array(
 			/** General Settings */
 			'general' => apply_filters( 'affwp_settings_general',
@@ -361,7 +374,7 @@ class Affiliate_WP_Settings {
 					),
 					'license_key' => array(
 						'name' => __( 'License Key', 'affiliate-wp' ),
-						'desc' => sprintf( __( 'Please enter your license key. An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' ),
+						'desc' => $license_desc,
 						'type' => 'license',
 						'sanitize_callback' => 'sanitize_text_field'
 					),
@@ -828,13 +841,23 @@ class Affiliate_WP_Settings {
 	 */
 	function license_callback( $args ) {
 
-		if ( isset( $this->options[ $args['id'] ] ) )
+		if ( isset( $this->options[ $args['id'] ] ) ) {
 			$value = $this->options[ $args['id'] ];
-		else
+		} else {
 			$value = isset( $args['std'] ) ? $args['std'] : '';
+		}
+
+		$sitewide_license = self::global_license_set();
+
+		$readonly = '';
+
+		if ( $sitewide_license ) {
+			$value = self::get_license_key();
+			$readonly = 'readonly="readonly"';
+		}
 
 		$size = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
-		$html = '<input type="text" class="' . $size . '-text" id="affwp_settings[' . $args['id'] . ']" name="affwp_settings[' . $args['id'] . ']" value="' . esc_attr( stripslashes( $value ) ) . '"/>';
+		$html = '<input type="text" class="' . $size . '-text" id="affwp_settings[' . $args['id'] . ']" name="affwp_settings[' . $args['id'] . ']" value="' . esc_attr( stripslashes( $value ) ) . '" ' . $readonly . '/>';
 		$license_status = $this->get( 'license_status' );
 		$license_key = ! empty( $value ) ? $value : false;
 
@@ -1037,7 +1060,7 @@ class Affiliate_WP_Settings {
 
 		if( ! isset( $_POST['affwp_settings']['license_key'] ) )
 			return;
-
+log_it( 'fired' );
 		// retrieve the license from the database
 		$status  = $this->get( 'license_status' );
 
@@ -1082,7 +1105,7 @@ class Affiliate_WP_Settings {
 		// data to send in our API request
 		$api_params = array(
 			'edd_action'=> 'deactivate_license',
-			'license' 	=> self::get_license_key( $_POST['affwp_settings']['license_key'] ),
+			'license' 	=> $_POST['affwp_settings']['license_key'],
 			'item_name' => 'AffiliateWP',
 			'url'       => home_url()
 		);
@@ -1162,7 +1185,7 @@ class Affiliate_WP_Settings {
 	 * @return string License key.
 	 */
 	public static function get_license_key( $key = '' ) {
-		if ( defined( 'AFFILIATEWP_LICENSE_KEY' ) && is_string( AFFILIATEWP_LICENSE_KEY ) ) {
+		if ( self::global_license_set() ) {
 			$license = AFFILIATEWP_LICENSE_KEY;
 		} elseif ( ! empty( $key ) ) {
 			$license = $key;
@@ -1172,4 +1195,19 @@ class Affiliate_WP_Settings {
 		return trim( $license );
 	}
 
+	/**
+	 * Determines whether the global license key has been defined.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @static
+	 *
+	 * @return bool True if the global license has been defined, otherwise false.
+	 */
+	public static function global_license_set() {
+		if ( defined( 'AFFILIATEWP_LICENSE_KEY' ) && is_string( AFFILIATEWP_LICENSE_KEY ) ) {
+			return true;
+		}
+		return false;
+	}
 }
