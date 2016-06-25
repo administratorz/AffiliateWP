@@ -1060,7 +1060,7 @@ class Affiliate_WP_Settings {
 
 		if( ! isset( $_POST['affwp_settings']['license_key'] ) )
 			return;
-log_it( 'fired' );
+
 		// retrieve the license from the database
 		$status  = $this->get( 'license_status' );
 
