@@ -3,6 +3,27 @@
 class Affiliate_WP_DB_Affiliates extends Affiliate_WP_DB {
 
 	/**
+	 * Cache group for queries.
+	 *
+	 * @internal DO NOT change. This is used externally both as a cache group and shortcut
+	 *           for accessing db class instances via affiliate_wp()->{$cache_group}->*.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $cache_group = 'affiliates';
+
+	/**
+	 * Object type to query for.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $query_object_type = 'AffWP\Affiliate';
+
+	/**
 	 * Get things started
 	 *
 	 * @access  public
@@ -19,6 +40,21 @@ class Affiliate_WP_DB_Affiliates extends Affiliate_WP_DB {
 		}
 		$this->primary_key = 'affiliate_id';
 		$this->version     = '1.1';
+	}
+
+	/**
+	 * Retrieves an affiliate object.
+	 *
+	 * @since 1.9
+	 * @access public
+	 *
+	 * @see Affiliate_WP_DB::get_core_object()
+	 *
+	 * @param int|object|AffWP\Affiliate $affiliate Affiliate ID or object.
+	 * @return AffWP\Affiliate|null Affiliate object, null otherwise.
+	 */
+	public function get_object( $affiliate ) {
+		return $this->get_core_object( $affiliate, $this->query_object_type );
 	}
 
 	/**
@@ -269,9 +305,16 @@ class Affiliate_WP_DB_Affiliates extends Affiliate_WP_DB {
 		$args['orderby'] = $orderby;
 		$args['order']   = $order;
 
-		$cache_key = ( true === $count ) ? md5( 'affwp_affiliates_count' . serialize( $args ) ) : md5( 'affwp_affiliates_' . serialize( $args ) );
+		$key = ( true === $count ) ? md5( 'affwp_affiliates_count' . serialize( $args ) ) : md5( 'affwp_affiliates_' . serialize( $args ) );
 
-		$results = wp_cache_get( $cache_key, 'affiliates' );
+		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		if ( ! $last_changed ) {
+			wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+		}
+
+		$cache_key = "{$key}:{$last_changed}";
+
+		$results = wp_cache_get( $cache_key, $this->cache_group );
 
 		if ( false === $results ) {
 
@@ -290,10 +333,14 @@ class Affiliate_WP_DB_Affiliates extends Affiliate_WP_DB {
 				);
 
 			}
-
-			wp_cache_set( $cache_key, $results, 'affiliates', HOUR_IN_SECONDS );
-
 		}
+
+		// Convert to AffWP\Affiliate objects.
+		if ( is_array( $results ) ) {
+			$results = array_map( 'affwp_get_affiliate', $results );
+		}
+
+		wp_cache_add( $cache_key, $results, $this->cache_group, HOUR_IN_SECONDS );
 
 		return $results;
 
@@ -386,11 +433,9 @@ class Affiliate_WP_DB_Affiliates extends Affiliate_WP_DB {
 			return false;
 		}
 
-		$add  = $this->insert( $args, 'affiliate' );
+		$add = $this->insert( $args, 'affiliate' );
 
-		if( $add ) {
-			wp_cache_flush();
-
+		if ( $add ) {
 			do_action( 'affwp_insert_affiliate', $add );
 			return $add;
 		}

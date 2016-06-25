@@ -46,7 +46,7 @@ if( ! is_user_logged_in() && ! empty( $errors ) ) {
 
 			<p>
 				<label for="affwp-user-login"><?php _e( 'Username', 'affiliate-wp' ); ?></label>
-				<input id="affwp-user-login" class="required" type="text" name="affwp_user_login" value="<?php if( ! empty( $user_login ) ) { echo $user_login; } ?>" title="<?php esc_attr_e( 'Username', 'affiliate-wp' ); ?>" />
+				<input id="affwp-user-login" class="required" type="text" name="affwp_user_login" maxlength="60" value="<?php if( ! empty( $user_login ) ) { echo $user_login; } ?>" title="<?php esc_attr_e( 'Username', 'affiliate-wp' ); ?>" />
 			</p>
 
 			<p>

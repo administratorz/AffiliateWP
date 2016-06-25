@@ -28,3 +28,5 @@ $RECYCLE.BIN/
 /vendor/
 composer.lock
 /build/
+composer.lock
+vendor

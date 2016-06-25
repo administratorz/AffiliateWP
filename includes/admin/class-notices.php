@@ -58,7 +58,7 @@ class Affiliate_WP_Admin_Notices {
 
 				case 'affiliate_added_failed' :
 
-					$message = __( 'Affiliate wasn\'t added, please try again.', 'affiliate-wp' );
+					$message = __( 'Affiliate wasn&#8217;t added, please try again.', 'affiliate-wp' );
 					$class   = 'error';
 
 					break;

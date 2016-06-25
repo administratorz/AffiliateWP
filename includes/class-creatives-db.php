@@ -3,6 +3,27 @@
 class Affiliate_WP_Creatives_DB extends Affiliate_WP_DB {
 
 	/**
+	 * Cache group for queries.
+	 *
+	 * @internal DO NOT change. This is used externally both as a cache group and shortcut
+	 *           for accessing db class instances via affiliate_wp()->{$cache_group}->*.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $cache_group = 'creatives';
+
+	/**
+	 * Object type to query for.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $query_object_type = 'AffWP\Creative';
+
+	/**
 	 * Get things started
 	 *
 	 * @access  public
@@ -19,6 +40,21 @@ class Affiliate_WP_Creatives_DB extends Affiliate_WP_DB {
 		}
 		$this->primary_key = 'creative_id';
 		$this->version     = '1.0';
+	}
+
+	/**
+	 * Retrieves a creative object.
+	 *
+	 * @since 1.9
+	 * @access public
+	 *
+	 * @see Affiliate_WP_DB::get_core_object()
+	 *
+	 * @param int|object|AffWP\Creative $creative Creative ID or object.
+	 * @return AffWP\Creative|null Creative object, null otherwise.
+	 */
+	public function get_object( $creative ) {
+		return $this->get_core_object( $creative, $this->query_object_type );
 	}
 
 	/**
@@ -101,9 +137,16 @@ class Affiliate_WP_Creatives_DB extends Affiliate_WP_DB {
 		$args['orderby'] = $orderby;
 		$args['order']   = $order;
 
-		$cache_key = ( true === $count ) ? md5( 'affwp_creatives_count' . serialize( $args ) ) : md5( 'affwp_creatives_' . serialize( $args ) );
+		$key = ( true === $count ) ? md5( 'affwp_creatives_count' . serialize( $args ) ) : md5( 'affwp_creatives_' . serialize( $args ) );
 
-		$results = wp_cache_get( $cache_key, 'creatives' );
+		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		if ( ! $last_changed ) {
+			wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+		}
+
+		$cache_key = "{$key}:{$last_changed}";
+
+		$results = wp_cache_get( $cache_key, $this->cache_group );
 
 		if ( false === $results ) {
 
@@ -122,10 +165,14 @@ class Affiliate_WP_Creatives_DB extends Affiliate_WP_DB {
 				);
 
 			}
-
-			wp_cache_set( $cache_key, $results, 'creatives', HOUR_IN_SECONDS );
-
 		}
+
+		// Convert to AffWP\Creative objects.
+		if ( is_array( $results ) ) {
+			$results = array_map( 'affwp_get_creative', $results );
+		}
+
+		wp_cache_add( $cache_key, $results, $this->cache_group, HOUR_IN_SECONDS );
 
 		return $results;
 
@@ -158,11 +205,9 @@ class Affiliate_WP_Creatives_DB extends Affiliate_WP_DB {
 
 		$args = wp_parse_args( $data, $defaults );
 
-		$add  = $this->insert( $args, 'creative' );
+		$add = $this->insert( $args, 'creative' );
 
 		if ( $add ) {
-			wp_cache_flush();
-
 			do_action( 'affwp_insert_creative', $add );
 			return $add;
 		}

@@ -3,6 +3,27 @@
 class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 
 	/**
+	 * Cache group for queries.
+	 *
+	 * @internal DO NOT change. This is used externally both as a cache group and shortcut
+	 *           for accessing db class instances via affiliate_wp()->{$cache_group}->*.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $cache_group = 'referrals';
+
+	/**
+	 * Object type to query for.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $query_object_type = 'AffWP\Referral';
+
+	/**
 	 * Get things started
 	 *
 	 * @access  public
@@ -21,6 +42,21 @@ class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 		$this->primary_key = 'referral_id';
 		$this->version     = '1.1';
 
+	}
+
+	/**
+	 * Retrieves a referral object.
+	 *
+	 * @since 1.9
+	 * @access public
+	 *
+	 * @see Affiliate_WP_DB::get_core_object()
+	 *
+	 * @param int|object|AffWP\Referral $referral Referral ID or object.
+	 * @return AffWP\Referral|null Referral object, null otherwise.
+	 */
+	public function get_object( $referral ) {
+		return $this->get_core_object( $referral, $this->query_object_type );
 	}
 
 	/**
@@ -119,20 +155,16 @@ class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 	}
 
 	/**
-	 * Update a referral
+	 * Update a referral.
 	 *
 	 * @access  public
 	 * @since   1.5
+	 *
+	 * @param int|AffWP\Referral $referral Referral ID or object.
 	*/
-	public function update_referral( $referral_id = 0, $data = array() ) {
+	public function update_referral( $referral = 0, $data = array() ) {
 
-		if( empty( $referral_id ) ) {
-			return false;
-		}
-
-		$referral = $this->get( $referral_id );
-
-		if( ! $referral ) {
+		if ( ! $referral = affwp_get_referral( $referral ) ) {
 			return false;
 		}
 
@@ -150,7 +182,7 @@ class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 
 			if( ! empty( $data['status'] ) && $referral->status !== $data['status'] ) {
 
-				affwp_set_referral_status( $referral, $data['status'] );
+				affwp_set_referral_status( $referral->ID, $data['status'] );
 
 			} elseif( 'paid' === $referral->status ) {
 
@@ -413,9 +445,16 @@ class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 		$args['orderby'] = $orderby;
 		$args['order']   = $order;
 
-		$cache_key = ( true === $count ) ? md5( 'affwp_referrals_count' . serialize( $args ) ) : md5( 'affwp_referrals_' . serialize( $args ) );
+		$key = ( true === $count ) ? md5( 'affwp_referrals_count' . serialize( $args ) ) : md5( 'affwp_referrals_' . serialize( $args ) );
 
-		$results = wp_cache_get( $cache_key, 'referrals' );
+		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		if ( ! $last_changed ) {
+			wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+		}
+
+		$cache_key = "{$key}:{$last_changed}";
+
+		$results = wp_cache_get( $cache_key, $this->cache_group );
 
 		if ( false === $results ) {
 
@@ -434,10 +473,14 @@ class Affiliate_WP_Referrals_DB extends Affiliate_WP_DB  {
 				);
 
 			}
-
-			wp_cache_set( $cache_key, $results, 'referrals', HOUR_IN_SECONDS );
-
 		}
+
+		// Convert to AffWP\Referral objects.
+		if ( is_array( $results ) ) {
+			$results = array_map( 'affwp_get_referral', $results );
+		}
+
+		wp_cache_add( $cache_key, $results, $this->cache_group, HOUR_IN_SECONDS );
 
 		return $results;
 

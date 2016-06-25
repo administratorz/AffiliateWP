@@ -131,7 +131,7 @@ function affwp_recount_tab() {
 								<option value="referrals"><?php _e( 'Referrals', 'affiliate-wp' ); ?></option>
 								<option value="visits"><?php _e( 'Visits', 'affiliate-wp' ); ?></option>
 							</select>
-							<div class="description"><?php _e( 'Enter the name of the affiliate or begin typing to perform a search based on the affiliate\'s name.', 'affiliate-wp' ); ?></div>
+							<div class="description"><?php _e( 'Enter the name of the affiliate or begin typing to perform a search based on the affiliate&#8217;s name.', 'affiliate-wp' ); ?></div>
 						</p>
 						<p>
 							<input type="hidden" name="user_id" id="user_id" value="0"/>
@@ -300,7 +300,7 @@ function affwp_export_import_tab() {
 								<option value="pending"><?php _e( 'Pending', 'affiliate-wp' ); ?></option>
 								<option value="rejected"><?php _e( 'Rejected', 'affiliate-wp' ); ?></option>
 							</select>
-							<div class="description"><?php _e( 'To search for an affiliate, enter the affiliate\'s login name, first name, or last name. Leave blank to export referrals for all affiliates.', 'affiliate-wp' ); ?></div>
+							<div class="description"><?php _e( 'To search for an affiliate, enter the affiliate&#8217;s login name, first name, or last name. Leave blank to export referrals for all affiliates.', 'affiliate-wp' ); ?></div>
 						</p>
 						<p>
 							<input type="hidden" name="affwp_action" value="export_referrals" />

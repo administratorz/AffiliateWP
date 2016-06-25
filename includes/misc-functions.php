@@ -571,3 +571,35 @@ function affwp_make_url_human_readable( $url ) {
 function affwp_affiliate_area_show_tab( $tab = '' ) {
 	return apply_filters( 'affwp_affiliate_area_show_tab', true, $tab );
 }
+
+/**
+ * Cleans the cache for a given object.
+ *
+ * @since 1.9
+ *
+ * @param AffWP\Object $object Object.
+ * @return bool True if the item cache was cleaned, false otherwise.
+ */
+function affwp_clean_item_cache( $object ) {
+	if ( ! is_object( $object ) ) {
+		return false;
+	}
+
+	if ( ! method_exists( $object, 'get_cache_key' ) ) {
+		return false;
+	}
+
+	$Object_Class      = get_class( $object );
+	$cache_key         = $Object_Class::get_cache_key( $object->ID );
+	$cache_group       = $Object_Class::$object_type;
+	$query_cache_group = $Object_Class::$object_group;
+
+	// Individual object.
+	wp_cache_delete( $cache_key, $cache_group );
+
+	// Prime the item cache.
+	$Object_Class::get_instance( $object->ID );
+
+	// last_changed for queries.
+	wp_cache_set( 'last_changed', microtime(), $query_cache_group );
+}

@@ -152,7 +152,7 @@ function affwp_notify_on_pending_affiliate_registration( $affiliate_id = 0, $sta
 	if ( empty( $message ) ) {
 		$message  = sprintf( __( 'Hi %s!', 'affiliate-wp' ), affiliate_wp()->affiliates->get_affiliate_name( $affiliate_id ) ) . "\n\n";
 		$message .= __( 'Thanks for your recent affiliate registration on {site_name}.', 'affiliate-wp' ) . "\n\n";
-		$message .= __( 'We\'re currently reviewing your affiliate application and will be in touch soon!', 'affiliate-wp' ) . "\n\n";
+		$message .= __( 'We&#8217;re currently reviewing your affiliate application and will be in touch soon!', 'affiliate-wp' ) . "\n\n";
 	}
 
 	if ( apply_filters( 'affwp_notify_on_pending_affiliate_registration', true ) ) {

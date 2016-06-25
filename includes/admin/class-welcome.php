@@ -49,8 +49,8 @@ class Affiliate_WP_Welcome {
 
 		// What's New
 		add_dashboard_page(
-			__( 'What\'s new in AffiliateWP', 'affiliate-wp' ),
-			__( 'What\'s new in AffiliateWP', 'affiliate-wp' ),
+			__( 'What&#8217;s new in AffiliateWP', 'affiliate-wp' ),
+			__( 'What&#8217;s new in AffiliateWP', 'affiliate-wp' ),
 			$this->minimum_capability,
 			'affwp-what-is-new',
 			array( $this, 'whats_new_screen' )
@@ -143,7 +143,7 @@ class Affiliate_WP_Welcome {
 		?>
 		<h2 class="nav-tab-wrapper">
 			<a class="nav-tab <?php echo $selected == 'affwp-what-is-new' ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( add_query_arg( array( 'page' => 'affwp-what-is-new' ), 'index.php' ) ) ); ?>">
-				<?php _e( "What's New", 'affiliate-wp' ); ?>
+				<?php _e( "What&#8217;s New", 'affiliate-wp' ); ?>
 			</a>
 			<a class="nav-tab <?php echo $selected == 'affwp-getting-started' ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( add_query_arg( array( 'page' => 'affwp-getting-started' ), 'index.php' ) ) ); ?>">
 				<?php _e( 'Getting Started', 'affiliate-wp' ); ?>
@@ -202,7 +202,7 @@ class Affiliate_WP_Welcome {
 					<p><?php _e( 'When rejecting affiliate accounts, a rejection reason can be provided that is then (optionally) emailed to the affiliate and recorded for future reference.', 'affiliate-wp' );?></p>
 
 					<h2><?php _e( 'reCaptcha v2.0', 'affiliate-wp' );?></h2>
-					<p><?php _e( 'Google\'s reCaptcha version 2.0 library has been introduced to AffiliateWP to help protect you and your website from spam user registrations.', 'affiliate-wp' );?></p>
+					<p><?php _e( 'Google&#8217;s reCaptcha version 2.0 library has been introduced to AffiliateWP to help protect you and your website from spam user registrations.', 'affiliate-wp' );?></p>
 
 					<h2><?php _e( 'Additional Updates', 'affiliate-wp' );?></h2>
 
@@ -258,8 +258,8 @@ class Affiliate_WP_Welcome {
 
 					<h4><?php _e( 'The Overview Page', 'affiliate-wp' );?></h4>
 					<p><?php _e( 'The overview page gives you a quick summary of your recent affiliate activity, including recent registrations, referrals, and visits.' ,'affiliate-wp' ); ?></p>
-					<p><?php _e( 'It also provides a quick summary of your affiliates\' referral earnings.', 'affiliate-wp' );?></p>
-					<p><?php _e( 'If you allow affiliate registrations, you can also easily accept or reject affiliate\'s applications directly from the Overview page', 'affiliate-wp' ); ?></p>
+					<p><?php _e( 'It also provides a quick summary of your affiliates&#8217; referral earnings.', 'affiliate-wp' );?></p>
+					<p><?php _e( 'If you allow affiliate registrations, you can also easily accept or reject affiliate&#8217;s applications directly from the Overview page', 'affiliate-wp' ); ?></p>
 				</div>
 
 				<h3><?php _e( 'Adding Affiliates', 'affiliate-wp' );?></h3>

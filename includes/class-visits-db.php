@@ -2,6 +2,27 @@
 
 class Affiliate_WP_Visits_DB extends Affiliate_WP_DB {
 
+	/**
+	 * Cache group for queries.
+	 *
+	 * @internal DO NOT change. This is used externally both as a cache group and shortcut
+	 *           for accessing db class instances via affiliate_wp()->{$cache_group}->*.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $cache_group = 'visits';
+
+	/**
+	 * Object type to query for.
+	 *
+	 * @since 1.9
+	 * @access public
+	 * @var string
+	 */
+	public $query_object_type = 'AffWP\Visit';
+
 	public function __construct() {
 		global $wpdb;
 
@@ -15,6 +36,20 @@ class Affiliate_WP_Visits_DB extends Affiliate_WP_DB {
 		$this->version     = '1.0';
 	}
 
+	/**
+	 * Retrieves a visit object.
+	 *
+	 * @since 1.9
+	 * @access public
+	 *
+	 * @see Affiliate_WP_DB::get_core_object()
+	 *
+	 * @param int|object|AffWP\Visit $visit Visit ID or object.
+	 * @return AffWP\Visit|null Visit object, null otherwise.
+	 */
+	public function get_object( $visit ) {
+		return $this->get_core_object( $visit, $this->query_object_type );
+	}
 
 	public function get_columns() {
 		return array(
@@ -199,9 +234,16 @@ class Affiliate_WP_Visits_DB extends Affiliate_WP_DB {
 		$args['orderby'] = $orderby;
 		$args['order']   = $order;
 
-		$cache_key = ( true === $count ) ? md5( 'affwp_visits_count' . serialize( $args ) ) : md5( 'affwp_visits_' . serialize( $args ) );
+		$key = ( true === $count ) ? md5( 'affwp_visits_count' . serialize( $args ) ) : md5( 'affwp_visits_' . serialize( $args ) );
 
-		$results = wp_cache_get( $cache_key, 'visits' );
+		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		if ( ! $last_changed ) {
+			wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+		}
+
+		$cache_key = "{$key}:{$last_changed}";
+
+		$results = wp_cache_get( $cache_key, $this->cache_group );
 
 		if ( false === $results ) {
 
@@ -220,10 +262,14 @@ class Affiliate_WP_Visits_DB extends Affiliate_WP_DB {
 				);
 
 			}
-
-			wp_cache_set( $cache_key, $results, 'visits', HOUR_IN_SECONDS );
-
 		}
+
+		// Convert to AffWP\Visit objects.
+		if ( is_array( $results ) ) {
+			$results = array_map( 'affwp_get_visit', $results );
+		}
+
+		wp_cache_add( $cache_key, $results, $this->cache_group, HOUR_IN_SECONDS );
 
 		return $results;
 
@@ -266,6 +312,49 @@ class Affiliate_WP_Visits_DB extends Affiliate_WP_DB {
 		affwp_increase_affiliate_visit_count( $data['affiliate_id'] );
 
 		return $visit_id;
+	}
+
+	/**
+	 * Updates a visit.
+	 *
+	 * @since 1.9
+	 * @access public
+	 *
+	 * @param int|AffWP\Visit $visit_id Visit ID or object.
+	 * @param array           $data     Optional. Data array. Default empty array.
+	 * @return int|false The visit ID if successfully updated, false otherwise.
+	 */
+	public function update_visit( $visit, $data = array() ) {
+
+		if ( ! $visit = affwp_get_visit( $visit ) ) {
+			return false;
+		}
+
+		if ( ! empty( $data['url'] ) ) {
+			$data['url'] = affwp_sanitize_visit_url( $data['url'] );
+		}
+
+		if ( ! empty( $data['campaign'] ) ) {
+			$data['campaign'] = substr( $data['campaign'], 0, 50 );
+		}
+
+		if ( ! empty( $data['affiliate_id'] ) ) {
+			// If the passed affiliate ID is invalid, ignore the new value.
+			if ( ! affwp_get_affiliate( $data['affiliate_id'] ) ) {
+				$data['affiliate_id'] = $visit->affiliate_id;
+			}
+		}
+		if ( $this->update( $visit->ID, $data, '', 'visit' ) ) {
+			$updated_visit = affwp_get_visit( $visit->ID );
+
+			// Handle visit counts if the affiliate was changed.
+			if ( $updated_visit->affiliate_id !== $visit->affiliate_id ) {
+				affwp_decrease_affiliate_visit_count( $visit->affiliate_id );
+				affwp_increase_affiliate_visit_count( $updated_visit->affiliate_id );
+			}
+			return $visit->ID;
+		}
+		return false;
 	}
 
 	/**
