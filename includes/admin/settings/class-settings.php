@@ -14,11 +14,17 @@ class Affiliate_WP_Settings {
 
 		$this->options = get_option( 'affwp_settings', array() );
 
+		// Set up.
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'activate_license' ) );
 		add_action( 'admin_init', array( $this, 'deactivate_license' ) );
 		add_action( 'admin_init', array( $this, 'check_license' ) );
 
+		// Global settings.
+		add_action( 'pre_get_registered_settings', array( $this, 'handle_global_license_setting' ) );
+		add_action( 'pre_get_registered_settings', array( $this, 'handle_global_debug_mode_setting' ) );
+
+		// Sanitization.
 		add_filter( 'affwp_settings_emails', array( $this, 'email_approval_settings' ) );
 		add_filter( 'affwp_settings_sanitize', array( $this, 'sanitize_referral_variable' ), 10, 2 );
 		add_filter( 'affwp_settings_sanitize_text', array( $this, 'sanitize_text_fields' ), 10, 2 );
@@ -365,26 +371,14 @@ class Affiliate_WP_Settings {
 		$user_info = get_userdata( get_current_user_id() );
 		$username  = $user_info ? esc_html( $user_info->user_login ) : '';
 
-		if ( self::global_license_set() ) {
-			$license_desc = sprintf( __( 'Your license key is globally defined in <code>wp-config.php</code> and cannot be modified from this screen.<br />An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' );
-		} else {
-			$license_desc = sprintf( __( 'Please enter your license key. An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' );
-
-		// Handle debug_mode description.
-		if ( defined( 'AFFILIATE_WP_DEBUG' ) && true === AFFILIATE_WP_DEBUG ) {
-			$this->options['debug_mode'] = 1;
-
-			// Globally enabled.
-			add_filter( 'affwp_settings_misc', function( $misc_settings ) {
-				$misc_settings['debug_mode']['disabled'] = true;
-
-				return $misc_settings;
-			} );
-
-			$debug_mode_desc = __( 'Debug mode is globally enabled via <code>AFFILIATE_WP_DEBUG</code> set in <code>wp-config.php</code>. This setting cannot be modified from this screen.', 'affiliate-wp' );
-		} else {
-			$debug_mode_desc = __( 'Check this box to enable debug mode. This will turn on error logging for the referral process to help identify problems.', 'affiliate-wp' );
-		}
+		/**
+		 * Fires before attempting to retrieve registered settings.
+		 *
+		 * @since 1.9
+		 *
+		 * @param Affiliate_WP_Settings $this Settings instance.
+		 */
+		do_action( 'pre_get_registered_settings', $this );
 
 		$settings = array(
 			/** General Settings */
@@ -397,7 +391,7 @@ class Affiliate_WP_Settings {
 					),
 					'license_key' => array(
 						'name' => __( 'License Key', 'affiliate-wp' ),
-						'desc' => $license_desc,
+						'desc' => sprintf( __( 'Please enter your license key. An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' ),
 						'type' => 'license',
 						'sanitize_callback' => 'sanitize_text_field'
 					),
@@ -660,7 +654,7 @@ class Affiliate_WP_Settings {
 					),
 					'debug_mode' => array(
 						'name' => __( 'Enable Debug Mode?', 'affiliate-wp' ),
-						'desc' => $debug_mode_desc,
+						'desc' => __( 'Check this box to enable debug mode. This will turn on error logging for the referral process to help identify problems.', 'affiliate-wp' ),
 						'type' => 'checkbox'
 					),
 					'uninstall_on_delete' => array(
@@ -1072,6 +1066,45 @@ class Affiliate_WP_Settings {
 		$html .= '<p class="description"> '  . $args['desc'] . '</p>';
 
 		echo $html;
+	}
+
+	/**
+	 * Handles overriding and disabling the license key setting if a global key is defined.
+	 *
+	 * @since 1.9
+	 * @access public
+	 */
+	public function handle_global_license_setting() {
+		if ( self::global_license_set() ) {
+			$this->options['license_key'] = self::get_license_key();
+
+			add_filter( 'affwp_settings_general', function ( $general_settings ) {
+				$general_settings['license_key']['disabled'] = true;
+				$general_settings['license_key']['desc']     = sprintf( __( 'Your license key is globally defined via <code>AFFILIATE_WP_LICENSE_KEY</code> set in <code>wp-config.php</code>.<br />It cannot be modified from this screen.<br />An active license key is needed for automatic plugin updates and <a href="%s" target="_blank">support</a>.', 'affiliate-wp' ), 'https://affiliatewp.com/support/' );
+
+				return $general_settings;
+			} );
+		}
+	}
+
+	/**
+	 * Handles overriding and disabling the debug mode setting if globally enabled.
+	 *
+	 * @since 1.9
+	 * @access public
+	 */
+	public function handle_global_debug_mode_setting() {
+		if ( defined( 'AFFILIATE_WP_DEBUG' ) && true === AFFILIATE_WP_DEBUG ) {
+			$this->options['debug_mode'] = 1;
+
+			// Globally enabled.
+			add_filter( 'affwp_settings_misc', function( $misc_settings ) {
+				$misc_settings['debug_mode']['disabled'] = true;
+				$misc_settings['debug_mode']['desc']     = __( 'Debug mode is globally enabled via <code>AFFILIATE_WP_DEBUG</code> set in <code>wp-config.php</code>. This setting cannot be modified from this screen.', 'affiliate-wp' );
+
+				return $misc_settings;
+			} );
+		}
 	}
 
 	/**
