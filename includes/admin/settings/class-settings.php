@@ -1241,7 +1241,8 @@ class Affiliate_WP_Settings {
 	/**
 	 * Retrieves the license key.
 	 *
-	 * If the `AFFILIATEWP_LICENSE_KEY` constant is defined, it will override values stored in the database.
+	 * If the `AFFILIATE_WP_LICENSE_KEY` constant is defined, it will override values
+	 * stored in the database.
 	 *
 	 * @since 1.9
 	 * @access public
@@ -1252,7 +1253,7 @@ class Affiliate_WP_Settings {
 	 */
 	public static function get_license_key( $key = '' ) {
 		if ( self::global_license_set() ) {
-			$license = AFFILIATEWP_LICENSE_KEY;
+			$license = AFFILIATE_WP_LICENSE_KEY;
 		} elseif ( ! empty( $key ) ) {
 			$license = $key;
 		} else {
@@ -1271,7 +1272,7 @@ class Affiliate_WP_Settings {
 	 * @return bool True if the global license has been defined, otherwise false.
 	 */
 	public static function global_license_set() {
-		if ( defined( 'AFFILIATEWP_LICENSE_KEY' ) && is_string( AFFILIATEWP_LICENSE_KEY ) ) {
+		if ( defined( 'AFFILIATE_WP_LICENSE_KEY' ) && is_string( AFFILIATE_WP_LICENSE_KEY ) ) {
 			return true;
 		}
 		return false;
