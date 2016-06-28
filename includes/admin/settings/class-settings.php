@@ -242,11 +242,11 @@ class Affiliate_WP_Settings {
 		foreach ( $input as $key => $value ) {
 
 			// Don't overwrite the global license key.
-//			if ( 'license_key' === $key ) {
-//				if ( self::global_license_set() && $value !== self::get_license_key() ) {
-//					$value = self::get_license_key();
-//				}
-//			}
+			if ( 'license_key' === $key ) {
+				if ( self::global_license_set() && $value !== self::get_license_key() ) {
+					$value = self::get_license_key();
+				}
+			}
 
 			// Get the setting type (checkbox, select, etc)
 			$type              = isset( $settings[ $tab ][ $key ][ 'type' ] ) ? $settings[ $tab ][ $key ][ 'type' ] : false;
