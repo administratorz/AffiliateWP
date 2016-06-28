@@ -25,6 +25,7 @@
 				<th class="visit-url"><?php _e( 'URL', 'affiliate-wp' ); ?></th>
 				<th class="referring-url"><?php _e( 'Referring URL', 'affiliate-wp' ); ?></th>
 				<th class="referral-status"><?php _e( 'Converted', 'affiliate-wp' ); ?></th>
+				<th class="visit-date"><?php _e( 'Date', 'affiliate-wp' ); ?></th>
 			</tr>
 		</thead>
 
@@ -44,6 +45,9 @@
 							<span class="visit-converted <?php echo esc_attr( $converted ); ?>" aria-label="<?php printf( esc_attr__( 'Visit converted: %s', 'affiliate-wp' ), $converted ); ?>">
 								<i></i>
 							</span>
+						</td>
+						<td>
+							<?php echo esc_html( mysql2date( 'Y-m-d H:i:s', $visit->date, true ) ); ?>
 						</td>
 					</tr>
 				<?php endforeach; ?>

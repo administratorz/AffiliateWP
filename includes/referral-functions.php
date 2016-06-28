@@ -198,6 +198,10 @@ function affwp_add_referral( $data = array() ) {
 		'status'       => 'pending',
 	);
 
+	if ( ! empty( $data['date'] ) ) {
+		$args['date'] = date_i18n( 'Y-m-d H:i:s', strtotime( $data['date'] ) );
+	}
+
 	$referral_id = affiliate_wp()->referrals->add( $args );
 
 	if ( $referral_id ) {
