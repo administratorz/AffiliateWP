@@ -1127,7 +1127,7 @@ class Affiliate_WP_Settings {
 		if( ! isset( $_POST['affwp_settings']['license_key'] ) )
 			return;
 
-		// retrieve the license from the database
+		// Retrieve the license status from the database.
 		$status  = $this->get( 'license_status' );
 
 		if( 'valid' == $status )
@@ -1152,9 +1152,6 @@ class Affiliate_WP_Settings {
 		$license_data = json_decode( wp_remote_retrieve_body( $response ) );
 
 		$this->save( array( 'license_status' => $license_data->license ) );
-
-		delete_transient( 'affwp_license_check' );
-
 	}
 
 	public function deactivate_license() {
@@ -1184,9 +1181,6 @@ class Affiliate_WP_Settings {
 			return false;
 
 		$this->save( array( 'license_status' => 0 ) );
-
-		delete_transient( 'affwp_license_check' );
-
 	}
 
 	public function check_license() {
