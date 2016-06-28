@@ -866,7 +866,7 @@ class Affiliate_WP_Settings {
 			$value = isset( $args['std'] ) ? $args['std'] : '';
 		}
 
-		// Must use a 'readonly' attribute over disabled to ensure the value is pased in $_POST.
+		// Must use a 'readonly' attribute over disabled to ensure the value is passed in $_POST.
 		$readonly = $this->is_setting_disabled( $args ) ? __checked_selected_helper( $args['disabled'], true, false, 'readonly' ) : '';
 
 		$size = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
